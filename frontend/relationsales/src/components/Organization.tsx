@@ -6,12 +6,14 @@ interface OrganizationProps {
   orgName: string;
   contacts: Contact[] | null;
   onContactDelete: (contactID: string) => void;
+  editContact: (contact: Contact) => void;
 }
 
 export const Organization: React.FC<OrganizationProps> = ({
   orgName,
   contacts,
   onContactDelete,
+  editContact,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,6 +40,7 @@ export const Organization: React.FC<OrganizationProps> = ({
                   <th style={thStyle}>Stilling</th>
                   <th style={thStyle}>Telefon</th>
                   <th style={thStyle}>E-post</th>
+                  <th style={thStyle}>Bedrift</th>
                   <th style={thStyle}>Sist kontaktet</th>
                   <th style={thStyle}>Handlinger</th>
                 </tr>
@@ -48,6 +51,8 @@ export const Organization: React.FC<OrganizationProps> = ({
                     key={contact.contactID}
                     contact={contact}
                     onDelete={onContactDelete}
+                    changeContact={editContact}
+                    orgName={orgName}
                   />
                 ))}
               </tbody>

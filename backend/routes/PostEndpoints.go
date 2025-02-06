@@ -5,7 +5,6 @@ import (
     "github.com/gin-gonic/gin" 
     "context"
     "time"
-    "fmt"
     t "backend/types"
     database "backend/database"
 )
@@ -37,7 +36,6 @@ func AddOrg(c *gin.Context){
 func AddContact(c *gin.Context){
     var contact t.Contact
     if err := c.ShouldBindJSON(&contact); err != nil {
-        fmt.Println(err)
         c.JSON(400, gin.H{"error": err.Error()})
         return
     } 
@@ -51,7 +49,6 @@ func AddContact(c *gin.Context){
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    fmt.Println(contact)
 
     c.JSON(200, gin.H{"contact": contact}) 
 }

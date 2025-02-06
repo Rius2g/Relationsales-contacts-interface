@@ -58,6 +58,24 @@ export class ApiClient {
     }
   }
 
+  async editContact(contact: Contact): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${baseUrl}/edit_contact`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      });
+      if (!response.ok) {
+        throw new Error(`Error editing contact: ${response.statusText}`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error(error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async deleteContact(id: string): Promise<ApiResponse<any>> {
     try {
       const response = await fetch(`${baseUrl}/delete_contact/${id}`, {

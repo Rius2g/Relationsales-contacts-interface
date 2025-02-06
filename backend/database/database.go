@@ -60,7 +60,6 @@ func (db *DBConfig) testConnection(ctx context.Context) error {
 func InitDb() error {
     log.Println("Starting database initialization")
     dbURL := os.Getenv("DATABASE_URL")
-    fmt.Println(dbURL)
     // Create the pool configuration
     config, err := pgxpool.ParseConfig(dbURL)
     if err != nil {
@@ -173,7 +172,6 @@ func (db *DBConfig) AddOrganization(ctx context.Context, org t.Organization) err
         return fmt.Errorf("failed to test connection: %w", err)
     }
 
-    fmt.Println(org)
 
     query := `INSERT INTO Organizations (OrgNumber, OrgName) VALUES ($1, $2);`
     _, err := db.Pool.Exec(ctx, query, org.OrgNumber, org.OrgName)
@@ -181,7 +179,6 @@ func (db *DBConfig) AddOrganization(ctx context.Context, org t.Organization) err
         return fmt.Errorf("failed to insert organization: %w", err)
     }
 
-    fmt.Println("Organization added successfully")
 
     return nil
 }

@@ -39,9 +39,8 @@ func main(){
 
     router.POST("/add_organization", routes.AddOrg)
     router.POST("/add_contact", routes.AddContact)
-    router.GET("/search", routes.Search)
     router.GET("/all_data", routes.AllData)
-    router.PUT("/change_info", routes.ChangeInfo)
+    router.PUT("/edit_contact", routes.ChangeInfo)
     router.DELETE("/delete_contact/:id", routes.DeleteContact)
 
 

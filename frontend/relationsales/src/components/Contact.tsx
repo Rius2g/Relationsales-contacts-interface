@@ -1,50 +1,73 @@
-import React from "react";
+import React, { useState } from "react";
 import { Edit, Trash2 } from "lucide-react";
 
-interface ContactProps {
-  contact: Contact;
-  onDelete: (contactID: string) => void;
+interface ContactType {
+  contactID: string;
+  orgNumber: number;
+  name: string;
+  positionName: string;
+  phone: number;
+  email: string | null;
+  contactedAt: Date;
 }
 
-export const Contact: React.FC<ContactProps> = ({ contact, onDelete }) => {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("no-NO", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+interface ContactProps {
+  contact: ContactType;
+  orgName: string;
+  onDelete: (contactID: string) => void;
+  changeContact: (contact: ContactType) => void;
+}
+
+export const Contact: React.FC<ContactProps> = ({
+  contact,
+  orgName,
+  onDelete,
+  changeContact,
+}) => {
+  const [isEditing, setIsEditing] = useState<{ [key: string]: boolean }>({});
+  const [editedContact, setEditedContact] = useState({ ...contact });
+
+  const handleBlur = (field: string) => {
+    setIsEditing((prev) => ({ ...prev, [field]: false }));
+    changeContact(editedContact);
   };
 
-  const formatPhoneNumber = (phone: number) => {
-    const phoneStr = phone.toString();
-    if (phoneStr.length === 8) {
-      return phoneStr.replace(/(\d{2})(\d{2})(\d{2})(\d{2})/, "$1 $2 $3 $4");
-    }
-    return phoneStr;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditedContact((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEdit = (field: string) => {
+    setIsEditing((prev) => ({ ...prev, [field]: true }));
   };
 
   return (
     <tr>
-      <td
-        style={{
-          padding: "12px 16px",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-          color: "#E5E7EB",
-          fontSize: "14px",
-        }}
-      >
-        {contact.name}
-      </td>
-      <td style={{ padding: "12px 16px" }}>{contact.positionName || "-"}</td>
+      {["name", "positionName", "phone", "email"].map((field) => (
+        <td
+          key={field}
+          style={{ padding: "12px 16px" }}
+          onClick={() => handleEdit(field)}
+        >
+          {isEditing[field] ? (
+            <input
+              type={field === "email" ? "email" : "text"}
+              name={field}
+              value={editedContact[field] || ""}
+              onChange={handleChange}
+              onBlur={() => handleBlur(field)}
+              autoFocus
+            />
+          ) : (
+            editedContact[field] || "-"
+          )}
+        </td>
+      ))}
+      <td style={{ padding: "12px 16px" }}>{orgName}</td>
       <td style={{ padding: "12px 16px" }}>
-        {formatPhoneNumber(contact.phone)}
-      </td>
-      <td style={{ padding: "12px 16px" }}>{contact.email || "-"}</td>
-      <td style={{ padding: "12px 16px" }}>
-        {contact.contactedAt ? formatDate(contact.contactedAt) : "-"}
+        {editedContact.contactedAt
+          ? new Date(editedContact.contactedAt).toLocaleString("no-NO")
+          : "-"}
       </td>
       <td style={{ padding: "12px 16px" }}>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -55,19 +78,6 @@ export const Contact: React.FC<ContactProps> = ({ contact, onDelete }) => {
               border: "none",
               cursor: "pointer",
               color: "#9CA3AF",
-              transition: "all 0.2s ease-in-out",
-            }}
-          >
-            <Edit size={16} />
-          </button>
-          <button
-            style={{
-              padding: "4px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#9CA3AF",
-              transition: "all 0.2s ease-in-out",
             }}
             onClick={() => onDelete(contact.contactID)}
           >
