@@ -142,7 +142,7 @@ func (db *DBConfig) createTables(ctx context.Context) error {
             OrgNumber int NOT NULL,
             Name VARCHAR(75) NOT NULL,
             Email VARCHAR(75),
-            Phone VARCHAR(15) NOT NULL,
+            Phone int NOT NULL,
             PositionName VARCHAR(75),
             ContactedAt TIMESTAMP NOT NULL,
             FOREIGN KEY (OrgNumber) REFERENCES Organizations(OrgNumber)
@@ -197,7 +197,7 @@ func (db *DBConfig) AddContact(ctx context.Context, contact t.Contact) error {
 
     query := `INSERT INTO Contacts (OrgNumber, Name, Email, Phone, PositionName, ContactedAt) VALUES ($1, $2, $3, $4, $5, $6);`
 
-    _, err := db.Pool.Exec(ctx, query, contact.OrgNumber, contact.Name, contact.Email, contact.Phone, contact.PositionName, contact.ContactedAt)
+    _, err := db.Pool.Exec(ctx, query, contact.OrgNumber, contact.Name, contact.Email, contact.Phone, contact.PositionName, time.Now())
     if err != nil {
         return fmt.Errorf("failed to insert contact: %w", err)
     }
@@ -271,7 +271,9 @@ func (db *DBConfig) GetAllData(ctx context.Context) ([]t.OrgWithContacts, error)
            org t.OrgWithContacts
            contact t.Contact
            contactID *uuid.UUID
-           name, email, phone, positionName, contactedAt *string
+           name, email *string
+           phone *int                    // Changed from *string to *int
+           positionName, contactedAt *string
        )
 
        err := rows.Scan(
@@ -298,7 +300,7 @@ func (db *DBConfig) GetAllData(ctx context.Context) ([]t.OrgWithContacts, error)
            if email != nil {
                contact.Email = *email
            }
-           contact.Phone = *phone
+           contact.Phone = *phone        // No need for conversion since it's already an int
            if positionName != nil {
                contact.PositionName = *positionName
            }
@@ -317,7 +319,6 @@ func (db *DBConfig) GetAllData(ctx context.Context) ([]t.OrgWithContacts, error)
 
    return orgs, nil
 }
-
 
 
 func (db *DBConfig) SafeRollback(ctx context.Context, tx pgx.Tx, err error) {

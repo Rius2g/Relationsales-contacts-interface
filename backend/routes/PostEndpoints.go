@@ -23,10 +23,8 @@ func AddOrg(c *gin.Context){
     defer cancel()
 
     
-    fmt.Println(org)
     
     if err := database.DB.AddOrganization(ctx, org); err != nil {
-        fmt.Println(err)
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
@@ -39,10 +37,10 @@ func AddOrg(c *gin.Context){
 func AddContact(c *gin.Context){
     var contact t.Contact
     if err := c.ShouldBindJSON(&contact); err != nil {
+        fmt.Println(err)
         c.JSON(400, gin.H{"error": err.Error()})
         return
     } 
-
 
     ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second) 
     defer cancel()
@@ -53,6 +51,7 @@ func AddContact(c *gin.Context){
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
+    fmt.Println(contact)
 
-    c.JSON(200, gin.H{"message": "Contact added successfully"})
+    c.JSON(200, gin.H{"contact": contact}) 
 }

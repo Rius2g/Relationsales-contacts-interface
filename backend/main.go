@@ -42,7 +42,7 @@ func main(){
     router.GET("/search", routes.Search)
     router.GET("/all_data", routes.AllData)
     router.PUT("/change_info", routes.ChangeInfo)
-    router.DELETE("/delete_user/:id", routes.DeleteContact)
+    router.DELETE("/delete_contact/:id", routes.DeleteContact)
 
 
    r.Run(":8080")

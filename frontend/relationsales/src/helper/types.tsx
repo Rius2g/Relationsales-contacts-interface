@@ -9,12 +9,20 @@ type NewOrganization = {
   OrgNumber: number;
 };
 
-interface Contact {
-  ContactID: number;
-  Phone: number;
-  OrgID: number;
+type NewContact = {
   Name: string;
+  Phone: number;
+  OrgNumber: number;
   Email: string | null;
   PositionName: string;
-  ContactedAt: Date;
+};
+
+interface Contact {
+  contactID: string;
+  phone: number;
+  orgNumber: number;
+  name: string;
+  email: string | null;
+  positionName: string;
+  contactedAt: Date;
 }

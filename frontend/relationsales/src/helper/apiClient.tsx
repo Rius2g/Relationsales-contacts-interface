@@ -39,4 +39,38 @@ export class ApiClient {
       return { success: false, error: error.message };
     }
   }
+
+  async addContact(data: NewContact): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${baseUrl}/add_contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error(`Error adding contact: ${response.statusText}`);
+      }
+      const respdata = await response.json();
+      return { success: true, data: respdata };
+    } catch (error: any) {
+      console.error(error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async deleteContact(id: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await fetch(`${baseUrl}/delete_contact/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Error deleting contact: ${response.statusText}`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error(error);
+      return { success: false, error: error.message };
+    }
+  }
 }

@@ -21,9 +21,9 @@ type Contact struct {
     ContactID uuid.UUID `json:"contactID"`
     Name string `json:"name"` 
     Email string `json:"email"` 
-    Phone string `json:"phone"`
-    PositionName string `json:"positionName"`
     ContactedAt string `json:"contactedAt"`
+    PositionName string `json:"positionName"`
+    Phone int `json:"phone"`
     OrgNumber int `json:"orgNumber"`
 }
     
