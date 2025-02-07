@@ -134,7 +134,8 @@ func (db *DBConfig) createTables(ctx context.Context) error {
     tableQueries := []string{
         `CREATE TABLE IF NOT EXISTS Organizations(
             OrgNumber int PRIMARY KEY,
-            OrgName VARCHAR(75) NOT NULL UNIQUE
+            OrgName VARCHAR(75) NOT NULL UNIQUE,
+            OrgType VARCHAR(75) NOT NULL
         );`,
         `CREATE TABLE IF NOT EXISTS Contacts(
             ContactID UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -173,8 +174,8 @@ func (db *DBConfig) AddOrganization(ctx context.Context, org t.Organization) err
     }
 
 
-    query := `INSERT INTO Organizations (OrgNumber, OrgName) VALUES ($1, $2);`
-    _, err := db.Pool.Exec(ctx, query, org.OrgNumber, org.OrgName)
+    query := `INSERT INTO Organizations (OrgNumber, OrgName, OrgType) VALUES ($1, $2, $3);`
+    _, err := db.Pool.Exec(ctx, query, org.OrgNumber, org.OrgName, org.OrgType)
     if err != nil {
         return fmt.Errorf("failed to insert organization: %w", err)
     }
@@ -249,7 +250,7 @@ func (db *DBConfig) GetAllData(ctx context.Context) ([]t.OrgWithContacts, error)
        return nil, fmt.Errorf("failed to test connection: %w", err)
    }
 
-   query := `SELECT Organizations.OrgNumber, Organizations.OrgName, 
+   query := `SELECT Organizations.OrgNumber, Organizations.OrgName, Organizations.OrgType,
              Contacts.ContactID, Contacts.Name, Contacts.Email, 
              Contacts.Phone, Contacts.PositionName, Contacts.ContactedAt 
              FROM Organizations 
@@ -276,6 +277,7 @@ func (db *DBConfig) GetAllData(ctx context.Context) ([]t.OrgWithContacts, error)
        err := rows.Scan(
            &org.OrgNumber,
            &org.OrgName,
+           &org.OrgType,
            &contactID,
            &name,
            &email,
@@ -315,6 +317,36 @@ func (db *DBConfig) GetAllData(ctx context.Context) ([]t.OrgWithContacts, error)
    }
 
    return orgs, nil
+}
+
+
+func(db *DBConfig) GetOrgTypes(ctx context.Context) ([]string, error){
+    if ctx.Err() != nil {
+        return nil, fmt.Errorf("context error: %w", ctx.Err())
+    }
+
+    if err := DB.testConnection(ctx); err != nil { 
+        return nil, fmt.Errorf("failed to test connection: %w", err)
+    }
+
+    query := `SELECT DISTINCT OrgType FROM Organizations;` 
+    rows, err := DB.Pool.Query(ctx, query)
+    if err != nil {
+        return nil, fmt.Errorf("failed to query data: %w", err)
+    }
+
+    defer rows.Close()
+
+    orgTypes := make([]string, 0) 
+    for rows.Next() { 
+        var orgType string
+        if err := rows.Scan(&orgType); err != nil {
+            return nil, fmt.Errorf("failed to scan row: %w", err)
+        }
+        orgTypes = append(orgTypes, orgType)
+    }
+
+    return orgTypes, nil
 }
 
 

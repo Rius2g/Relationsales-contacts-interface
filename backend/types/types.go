@@ -8,12 +8,14 @@ import (
 type Organization struct {
     OrgNumber int `json:"orgNumber"`
     OrgName string `json:"organizationName"` 
+    OrgType string `json:"orgType"`
 }
 
 
 type OrgWithContacts struct {
     OrgNumber int `json:"orgNumber"`
     OrgName string `json:"orgName"` 
+    OrgType string `json:"orgType"`
     Contacts []Contact `json:"contacts"`
 }
 

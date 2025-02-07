@@ -9,7 +9,7 @@ function App() {
     OrgNumber: "",
   });
 
-  const ap;
+  const client = new apiClient();
 
   const handleSubmit = async () => {
     try {
@@ -66,8 +66,6 @@ function App() {
           </div>
         </div>
       )}
-
-      {/* Rest of your code */}
     </>
   );
 }

@@ -9,6 +9,7 @@ import (
 
     database "backend/database"
     routes "backend/routes"
+    middleware "backend/middleware"
 )
 
 
@@ -36,12 +37,18 @@ func main(){
     defer database.DB.Close()
     
     router := r.Group("/api") 
-
-    router.POST("/add_organization", routes.AddOrg)
-    router.POST("/add_contact", routes.AddContact)
-    router.GET("/all_data", routes.AllData)
-    router.PUT("/edit_contact", routes.ChangeInfo)
-    router.DELETE("/delete_contact/:id", routes.DeleteContact)
+    {
+        protected := router.Group("/") 
+        protected.Use(middleware.AuthMiddleware())
+        {
+        router.POST("/add_contact", routes.AddContact)
+        router.POST("/add_organization", routes.AddOrg)
+        router.GET("/all_data", routes.AllData)
+        router.GET("/org_types", routes.GetOrgTypes)
+        router.PUT("/edit_contact", routes.ChangeInfo)
+        router.DELETE("/delete_contact/:id", routes.DeleteContact)
+        }
+    }
 
 
    r.Run(":8080")

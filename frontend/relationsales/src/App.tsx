@@ -2,19 +2,31 @@ import "./App.css";
 import React, {
   useEffect,
   useState,
+  useLayoutEffect,
   useMemo,
   useCallback,
-  useLayoutEffect,
 } from "react";
-import { ApiClient } from "../src/helper/apiClient";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useApi } from "../src/helper/apiClient";
 import { Organization as OrganizationComponent } from "./components/Organization";
 import { AddOrgModal } from "./components/AddOrganizationModal";
 import { AddContactModal } from "./components/addContactModal";
 import logoDarkGreen from "./assets/logo-relationslaes-transparent-dark-green.png";
 import { Contact as ContactComponent } from "./components/Contact";
+import { OrgTypeFilter } from "./components/orgTypeFilter";
 import debounce from "lodash/debounce";
 
 function App() {
+  // Auth0 hooks
+  const {
+    isAuthenticated,
+    loginWithRedirect,
+    isLoading: authLoading,
+    error,
+    user,
+  } = useAuth0();
+
+  // All useState hooks grouped together
   const [data, setData] = useState<OrganizationType[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -22,16 +34,33 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
-  const client = new ApiClient();
+  const [availableOrgTypes, setAvailableOrgTypes] = useState<string[]>([]);
+  const [selectedOrgTypes, setSelectedOrgTypes] = useState<string[]>([]);
 
+  // API client instance
+  const client = useApi();
+
+  // Logo loading effect
   useLayoutEffect(() => {
     const img = new Image();
     img.src = logoDarkGreen;
     img.onload = () => setLogoLoaded(true);
   }, []);
 
+  // Authentication effect
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    }
+  }, [isAuthenticated, authLoading, loginWithRedirect]);
+
+  // Data fetching effects
   useEffect(() => {
     const fetchData = async () => {
+      if (!isAuthenticated) return;
+
       try {
         setIsLoading(true);
         const response = await client.getAllData();
@@ -44,9 +73,28 @@ function App() {
         setIsLoading(false);
       }
     };
-    fetchData();
-  }, []);
 
+    fetchData();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const fetchOrgTypes = async () => {
+      if (!isAuthenticated) return;
+
+      try {
+        const response = await client.getOrgTypes();
+        if (response.success) {
+          setAvailableOrgTypes(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching organization types:", error);
+      }
+    };
+
+    fetchOrgTypes();
+  }, [isAuthenticated]);
+
+  // Search index memoization
   const searchIndex = useMemo(() => {
     return data.reduce(
       (acc, org) => {
@@ -69,6 +117,12 @@ function App() {
     );
   }, [data]);
 
+  // Memoized values and callbacks
+  const memoizedOrgTypes = useMemo(
+    () => availableOrgTypes,
+    [availableOrgTypes],
+  );
+
   const handleSearchChange = useCallback((value: string) => {
     setIsSearching(true);
     setSearchQuery(value);
@@ -80,6 +134,7 @@ function App() {
     [handleSearchChange],
   );
 
+  // Search filtering logic
   const { filteredOrganizations, filteredContacts } = useMemo(() => {
     const searchQueryLower = searchQuery.toLowerCase().trim();
 
@@ -115,6 +170,7 @@ function App() {
     };
   }, [searchQuery, searchIndex, data]);
 
+  // API operations
   const editContact = async (contact: Contact) => {
     try {
       const response = await client.editContact(contact);
@@ -161,8 +217,9 @@ function App() {
   const handleAddOrg = async (orgData: {
     OrganizationName: string;
     OrgNumber: number;
+    OrgType: string;
   }) => {
-    if (!orgData.OrganizationName || !orgData.OrgNumber) {
+    if (!orgData.OrganizationName || !orgData.OrgNumber || !orgData.OrgType) {
       console.error("Organization name and number are required");
       return;
     }
@@ -172,6 +229,7 @@ function App() {
         const newOrg = {
           orgName: orgData.OrganizationName,
           orgNumber: orgData.OrgNumber,
+          orgType: orgData.OrgType,
           contacts: [],
         };
         setData([...data, newOrg]);
@@ -227,6 +285,15 @@ function App() {
     }
   };
 
+  // Loading states
+  if (authLoading) {
+    return <div>Checking authentication...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <div>Redirecting to login...</div>;
+  }
+
   if (isLoading) {
     return (
       <div
@@ -257,15 +324,7 @@ function App() {
               animation: "spin 1s linear infinite",
             }}
           />
-          <style>
-            {`
-              @keyframes spin {
-                to {
-                  transform: rotate(360deg);
-                }
-              }
-            `}
-          </style>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
@@ -315,6 +374,12 @@ function App() {
             Ny bedrift
           </button>
 
+          <OrgTypeFilter
+            selectedTypes={selectedOrgTypes}
+            onTypeChange={setSelectedOrgTypes}
+            availableTypes={memoizedOrgTypes}
+          />
+
           <div style={searchContainerStyle}>
             <div style={{ position: "relative", flex: 1 }}>
               <input
@@ -354,12 +419,13 @@ function App() {
           {filteredOrganizations.length > 0 && (
             <>
               <h3 style={{ color: "white", marginTop: "20px" }}>
-                Organisasjoner
+                Organisasjoner: {filteredOrganizations.length}
               </h3>
               {filteredOrganizations.map((item) => (
                 <OrganizationComponent
                   key={item.orgNumber}
                   orgName={item.orgName}
+                  orgType={item.orgType}
                   contacts={item.contacts}
                   onContactDelete={deleteContact}
                   editContact={editContact}
@@ -367,7 +433,6 @@ function App() {
               ))}
             </>
           )}
-
           {filteredOrganizations.length === 0 &&
             filteredContacts.length > 0 && (
               <div
@@ -385,7 +450,7 @@ function App() {
                     textAlign: "center",
                   }}
                 >
-                  Kontakter
+                  Kontakter: {filteredContacts.length}
                 </h3>
                 <div
                   style={{
@@ -459,10 +524,9 @@ export default App;
 
 const controlsContainerStyle: React.CSSProperties = {
   display: "flex",
-  justifyContent: "space-between",
   alignItems: "center",
   marginBottom: "32px",
-  gap: "24px",
+  gap: "16px", // Reduced gap
   position: "relative",
   width: "100%",
 };
@@ -471,24 +535,8 @@ const searchContainerStyle: React.CSSProperties = {
   display: "flex",
   gap: "8px",
   flex: "1",
-  maxWidth: "600px",
-  minWidth: "400px",
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: "12px 16px",
-  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-  color: "#E5E7EB",
-  fontSize: "14px",
-};
-
-const actionButtonStyle: React.CSSProperties = {
-  padding: "4px",
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  color: "#9CA3AF",
-  transition: "all 0.2s ease-in-out",
+  maxWidth: "400px", // Reduced max width
+  minWidth: "200px", // Reduced min width to allow more flexibility
 };
 
 const buttonStyle: React.CSSProperties = {
@@ -511,6 +559,7 @@ const addOrgButtonStyle: React.CSSProperties = {
 const addContactButtonStyle: React.CSSProperties = {
   ...buttonStyle,
   backgroundColor: "#22C55E",
+  padding: "20px 24px",
 };
 
 const searchInputStyle: React.CSSProperties = {

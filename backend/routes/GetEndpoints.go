@@ -19,3 +19,15 @@ func AllData(c *gin.Context){
     }
     c.JSON(200, orgsWithContacts)
 }
+
+func GetOrgTypes(c *gin.Context){
+    ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second) 
+    defer cancel()
+
+    orgTypes, err := database.DB.GetOrgTypes(ctx)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(200, orgTypes)
+}

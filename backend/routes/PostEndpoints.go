@@ -5,13 +5,13 @@ import (
     "github.com/gin-gonic/gin" 
     "context"
     "time"
+    "fmt"
     t "backend/types"
     database "backend/database"
 )
 
 
 func AddOrg(c *gin.Context){
-    //add org
     var org t.Organization 
     if err := c.ShouldBindJSON(&org); err != nil {
         c.JSON(400, gin.H{"error": err.Error()})
@@ -20,10 +20,9 @@ func AddOrg(c *gin.Context){
 
     ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second) 
     defer cancel()
-
-    
     
     if err := database.DB.AddOrganization(ctx, org); err != nil {
+        fmt.Println(err)
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
